@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuanpeng.dao.mapper.YpOrderMapper">
+  <resultMap id="BaseResultMap" type="com.yuanpeng.dao.model.YpOrder">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="customer_id" jdbcType="INTEGER" property="customerId" />
+    <result column="total_price" jdbcType="DECIMAL" property="totalPrice" />
+    <result column="status" jdbcType="TINYINT" property="status" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, customer_id, total_price, status, create_time, update_time
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from yp_order
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="getAllOrderGoods" resultType="com.yuanpeng.dao.model.OrderGoods" useCache="true">
+    SELECT od.id,od.create_time,od.status,od.total_price,de.price,de.size,goo.unit,goo.name
+    FROM ypBusinesss.yp_order od
+    LEFT JOIN ypBusinesss.yp_order_detail de ON od.id = de.order_id
+    LEFT JOIN ypBusinesss.yp_customer yc ON od.customer_id = yc.id
+    LEFT JOIN ypBusinesss.yp_goods goo ON de.goods_id = goo.id
+    WHERE de.status = 0 AND yc.open_id = #{openid}
+    <if test="dateTime != null and dateTime != '' ">
+      and od.create_time like CONCAT(#{dateTime},'%')
+    </if>
+    <if test="orderStatus != null">
+      and od.status = #{orderStatus}
+    </if>
+    order by od.create_time desc
+  </select>
+  <select id="getAllOrders" resultType="com.yuanpeng.dao.model.OrderbackModel">
+    SELECT od.id,od.create_time,od.status,cu.nick_name customerName,cu.mobile customerMobile,od.total_price,cu.address customerAddress
+    FROM ypBusinesss.yp_order od
+    LEFT JOIN ypBusinesss.yp_customer cu on od.customer_id = cu.id
+    where 1 = 1
+    <if test="mobile != null and mobile != 'null'  and mobile != ''">
+      and cu.mobile = #{mobile}
+    </if>
+    <if test="name != null and name != 'null' and name != ''">
+      and cu.nick_name like CONCAT('%',#{name},'%')
+    </if>
+    <if test="status != null">
+      and od.status = #{status}
+    </if>
+    ORDER BY field(od.status,0,1,2,3),od.create_time desc
+    limit #{current},20
+  </select>
+  <select id="getTotal" resultType="java.lang.Long">
+    SELECT count(1)
+    FROM ypBusinesss.yp_order od
+    LEFT JOIN ypBusinesss.yp_customer cu on od.customer_id = cu.id
+    where 1 = 1
+    <if test="mobile != null and mobile != 'null'  and mobile != ''">
+      and cu.mobile = #{mobile}
+    </if>
+    <if test="name != null and name != 'null' and name != ''">
+      and cu.nick_name like CONCAT('%',#{name},'%')
+    </if>
+    <if test="status != null">
+      and od.status = #{status}
+    </if>
+  </select>
+  <select id="getOrderMessage" resultType="com.yuanpeng.dao.model.OrderbackModel">
+    SELECT od.id,od.create_time,od.status,cu.nick_name customerName,cu.mobile customerMobile,od.total_price,cu.address customerAddress,cu.open_id
+    FROM ypBusinesss.yp_order od
+    LEFT JOIN ypBusinesss.yp_customer cu on od.customer_id = cu.id
+    where od.id = #{id} limit 1
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from yp_order
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteAll">
+    delete from yp_order
+  </delete>
+  <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.yuanpeng.dao.model.YpOrder" useGeneratedKeys="true">
+    insert into yp_order (customer_id, total_price, status, 
+      create_time, update_time)
+    values (#{customerId,jdbcType=INTEGER}, #{totalPrice,jdbcType=DECIMAL}, #{status,jdbcType=TINYINT}, 
+      #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP})
+  </insert>
+  <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.yuanpeng.dao.model.YpOrder" useGeneratedKeys="true">
+    insert into yp_order
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="customerId != null">
+        customer_id,
+      </if>
+      <if test="totalPrice != null">
+        total_price,
+      </if>
+      <if test="status != null">
+        status,
+      </if>
+      <if test="createTime != null">
+        create_time,
+      </if>
+      <if test="updateTime != null">
+        update_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="customerId != null">
+        #{customerId,jdbcType=INTEGER},
+      </if>
+      <if test="totalPrice != null">
+        #{totalPrice,jdbcType=DECIMAL},
+      </if>
+      <if test="status != null">
+        #{status,jdbcType=TINYINT},
+      </if>
+      <if test="createTime != null">
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null">
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.yuanpeng.dao.model.YpOrder">
+    update yp_order
+    <set>
+      <if test="customerId != null">
+        customer_id = #{customerId,jdbcType=INTEGER},
+      </if>
+      <if test="totalPrice != null">
+        total_price = #{totalPrice,jdbcType=DECIMAL},
+      </if>
+      <if test="status != null">
+        status = #{status,jdbcType=TINYINT},
+      </if>
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.yuanpeng.dao.model.YpOrder">
+    update yp_order
+    set customer_id = #{customerId,jdbcType=INTEGER},
+      total_price = #{totalPrice,jdbcType=DECIMAL},
+      status = #{status,jdbcType=TINYINT},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateOrderStatus">
+    update yp_order
+    set status = #{status}
+    <if test="price != null ">
+      ,total_price = #{price}
+    </if>
+    where id = #{orderId}
+  </update>
+</mapper>
